@@ -4,6 +4,7 @@ import {
     createPurchase,
     findPurchaseById,
     findPurchasesByClientId,
+    findAllPurchases,
 } from '../services/purchase.service';
 import { CreatePurchaseInput } from '../schemas/purchase.schema';
 
@@ -51,6 +52,15 @@ export async function getPurchasesForClientHandler(req: Request, res: Response) 
         const purchases = await findPurchasesByClientId(clientId);
 
 
+        return res.status(200).json(purchases);
+    } catch (error: any) {
+        return res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
+}
+
+export async function getAllPurchasesHandler(req: Request, res: Response) {
+    try {
+        const purchases = await findAllPurchases();
         return res.status(200).json(purchases);
     } catch (error: any) {
         return res.status(500).json({ message: 'Erro interno no servidor.' });

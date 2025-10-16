@@ -83,3 +83,24 @@ export async function findPurchasesByClientId(clientId: number) {
         include: [{ model: Product, as: 'products' }],
     });
 }
+
+export async function findAllPurchases() {
+    return Purchase.findAll({
+
+        order: [['createdAt', 'DESC']],
+        include: [
+            {
+                model: Client,
+                as: 'client',
+
+                attributes: ['id', 'name'],
+            },
+            {
+                model: Product,
+                as: 'products',
+
+                through: { attributes: ['quantity'] },
+            },
+        ],
+    });
+}
