@@ -12,7 +12,7 @@ const config = {
     dialectOptions: {
         ssl: {
             require: true,
-            rejectUnauthorized: true
+            rejectUnauthorized: false
         }
     },
     logging: false,
