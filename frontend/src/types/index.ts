@@ -26,7 +26,7 @@ export interface PurchaseProduct {
 
 export interface Purchase {
     id: number;
-    total: number;
+    totalPrice: number;
     createdAt: string;
     client: {
         id: number;

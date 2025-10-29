@@ -60,7 +60,7 @@ export default function PurchasesPage() {
                             <hr className="my-2 border-border" />
                             <div className="flex justify-between font-bold">
                                 <span>Total</span>
-                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(purchase.total)}</span>
+                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(purchase.totalPrice)}</span>
                             </div>
                         </div>
                     ))}
