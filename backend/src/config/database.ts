@@ -8,7 +8,13 @@ const config = {
     database: process.env.DB_DATABASE,
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
-    dialect: 'mysql', // Alterado para 'mysql'
+    dialect: 'mysql',
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: true
+        }
+    },
     logging: false,
 };
 

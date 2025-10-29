@@ -10,9 +10,13 @@ import purchaseRouter from './routes/purchase.routes';
 import dashboardRouter from './routes/dashboard.routes';
 
 const app = express();
-const PORT = process.env.APP_PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const corsOptions = {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 

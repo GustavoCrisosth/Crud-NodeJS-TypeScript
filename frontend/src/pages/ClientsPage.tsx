@@ -1,10 +1,15 @@
 
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import type { Client } from '../types';
 import { AxiosError } from 'axios';
 import { MoreHorizontal } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { clientFormSchema, type ClientFormData } from '../schemas/clientFormSchema';
+
 
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
@@ -13,6 +18,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form'; // Certifique-se que o 'form' foi adicionado com 'npx shadcn@latest add form'
 
 export default function ClientsPage() {
     const navigate = useNavigate();
@@ -20,55 +26,41 @@ export default function ClientsPage() {
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [newClientName, setNewClientName] = useState('');
-    const [newClientEmail, setNewClientEmail] = useState('');
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
     const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
     const [editingName, setEditingName] = useState('');
     const [editingEmail, setEditingEmail] = useState('');
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+    const createForm = useForm<ClientFormData>({
+        resolver: zodResolver(clientFormSchema),
+        defaultValues: { name: '', email: '' },
+    });
 
     const fetchClients = async () => {
-        setError(null);
-        setLoading(true);
+        setError(null); setLoading(true);
         try {
             const response = await api.get('/clients');
             setClients(response.data);
         } catch (err) {
-            setError('Falha ao carregar os clientes. Verifique se a API está no ar.');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+            setError('Falha ao carregar os clientes.'); console.error(err);
+        } finally { setLoading(false); }
     };
 
-    useEffect(() => {
-        fetchClients();
-    }, []);
+    useEffect(() => { fetchClients(); }, []);
 
     useEffect(() => {
-        if (clientToEdit) {
-            setEditingName(clientToEdit.name);
-            setEditingEmail(clientToEdit.email);
-        }
+        if (clientToEdit) { setEditingName(clientToEdit.name); setEditingEmail(clientToEdit.email); }
     }, [clientToEdit]);
 
-    const handleCreateClient = async () => {
-        if (!newClientName || !newClientEmail) {
-            toast({ variant: "destructive", title: "Erro de Validação", description: "Por favor, preencha nome e e-mail." });
-            return;
-        }
+    const onSubmitCreate = async (data: ClientFormData) => {
         try {
-            await api.post('/clients', { name: newClientName, email: newClientEmail });
-            toast({ title: "Sucesso!", description: "Cliente cadastrado com sucesso." });
-            setNewClientName('');
-            setNewClientEmail('');
-            setIsCreateDialogOpen(false);
-            await fetchClients();
+            await api.post('/clients', data);
+            toast({ title: "Sucesso!", description: "Cliente cadastrado." });
+            setIsCreateDialogOpen(false); createForm.reset(); await fetchClients();
         } catch (error) {
-            const description = error instanceof AxiosError && error.response?.status === 409 ? 'Este e-mail já está cadastrado.' : 'Ocorreu um erro inesperado.';
-            toast({ variant: "destructive", title: "Falha ao criar cliente", description });
-            console.error(error);
+            const description = error instanceof AxiosError && error.response?.status === 409 ? 'E-mail já cadastrado.' : 'Erro inesperado.';
+            toast({ variant: "destructive", title: "Falha", description }); console.error(error);
         }
     };
 
@@ -76,30 +68,24 @@ export default function ClientsPage() {
         if (!clientToDelete) return;
         try {
             await api.delete(`/clients/${clientToDelete.id}`);
-            toast({ title: "Sucesso!", description: `Cliente "${clientToDelete.name}" excluído com sucesso.` });
-            setClientToDelete(null);
-            await fetchClients();
+            toast({ title: "Sucesso!", description: `Cliente "${clientToDelete.name}" excluído.` });
+            setClientToDelete(null); await fetchClients();
         } catch (error) {
-            toast({ variant: "destructive", title: "Falha ao excluir cliente", description: "Ocorreu um erro ao tentar excluir o cliente." });
-            console.error(error);
+            toast({ variant: "destructive", title: "Falha", description: "Erro ao excluir." }); console.error(error);
         }
     };
 
     const handleUpdateClient = async () => {
-        if (!clientToEdit) return;
-        if (!editingName || !editingEmail) {
-            toast({ variant: "destructive", title: "Erro de Validação", description: "Nome e e-mail não podem ficar vazios." });
-            return;
+        if (!clientToEdit || !editingName || !editingEmail) {
+            toast({ variant: "destructive", title: "Erro", description: "Campos obrigatórios." }); return;
         }
         try {
             await api.patch(`/clients/${clientToEdit.id}`, { name: editingName, email: editingEmail });
-            toast({ title: "Sucesso!", description: "Cliente atualizado com sucesso." });
-            setClientToEdit(null);
-            await fetchClients();
+            toast({ title: "Sucesso!", description: "Cliente atualizado." });
+            setClientToEdit(null); await fetchClients();
         } catch (error) {
-            const description = error instanceof AxiosError && error.response?.status === 409 ? 'Este e-mail já está cadastrado em outro cliente.' : 'Ocorreu um erro inesperado.';
-            toast({ variant: "destructive", title: "Falha ao atualizar cliente", description });
-            console.error(error);
+            const description = error instanceof AxiosError && error.response?.status === 409 ? 'E-mail já cadastrado.' : 'Erro inesperado.';
+            toast({ variant: "destructive", title: "Falha", description }); console.error(error);
         }
     };
 
@@ -112,12 +98,32 @@ export default function ClientsPage() {
                 <h1 className="text-3xl font-bold">Gerenciamento de Clientes</h1>
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                     <DialogTrigger asChild><Button>Adicionar Cliente</Button></DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]"><DialogHeader><DialogTitle>Adicionar Novo Cliente</DialogTitle><DialogDescription>Preencha os dados abaixo.</DialogDescription></DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nome</Label><Input id="name" value={newClientName} onChange={(e) => setNewClientName(e.target.value)} className="col-span-3" /></div>
-                            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="email" className="text-right">Email</Label><Input id="email" type="email" value={newClientEmail} onChange={(e) => setNewClientEmail(e.target.value)} className="col-span-3" /></div>
-                        </div>
-                        <DialogFooter><DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose><Button onClick={handleCreateClient}>Salvar</Button></DialogFooter>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader><DialogTitle>Adicionar Novo Cliente</DialogTitle><DialogDescription>Preencha os dados.</DialogDescription></DialogHeader>
+                        <Form {...createForm}>
+                            <form onSubmit={createForm.handleSubmit(onSubmitCreate)} className="space-y-4 py-4">
+                                <FormField control={createForm.control} name="name" render={({ field }) => (
+                                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                                        <FormLabel className="text-right">Nome</FormLabel>
+                                        <FormControl><Input placeholder="Nome" {...field} className="col-span-3" /></FormControl>
+                                        <FormMessage className="col-span-4 text-right" />
+                                    </FormItem>
+                                )} />
+                                <FormField control={createForm.control} name="email" render={({ field }) => (
+                                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                                        <FormLabel className="text-right">Email</FormLabel>
+                                        <FormControl><Input type="email" placeholder="email@exemplo.com" {...field} className="col-span-3" /></FormControl>
+                                        <FormMessage className="col-span-4 text-right" />
+                                    </FormItem>
+                                )} />
+                                <DialogFooter>
+                                    <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
+                                    <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                                        {createForm.formState.isSubmitting ? "Salvando..." : "Salvar"}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
                     </DialogContent>
                 </Dialog>
             </div>
@@ -132,6 +138,7 @@ export default function ClientsPage() {
                             <tr key={client.id} className="hover:bg-muted/50">
                                 <td className="px-6 py-4 whitespace-nowrap">{client.id}</td><td className="px-6 py-4 whitespace-nowrap font-medium">{client.name}</td><td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{client.email}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
+                                    { }
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
@@ -149,13 +156,13 @@ export default function ClientsPage() {
             </div>
 
             <AlertDialog open={!!clientToDelete} onOpenChange={() => setClientToDelete(null)}>
-                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Você tem certeza?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita. Isso irá excluir permanentemente o cliente <span className="font-bold"> "{clientToDelete?.name}"</span>.</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Você tem certeza?</AlertDialogTitle><AlertDialogDescription>Excluir cliente <span className="font-bold"> "{clientToDelete?.name}"</span>?</AlertDialogDescription></AlertDialogHeader>
                     <AlertDialogFooter><AlertDialogCancel onClick={() => setClientToDelete(null)}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDeleteClient}>Sim, excluir</AlertDialogAction></AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
             <Dialog open={!!clientToEdit} onOpenChange={() => setClientToEdit(null)}>
-                <DialogContent className="sm:max-w-[425px]"><DialogHeader><DialogTitle>Editar Cliente</DialogTitle><DialogDescription>Altere os dados abaixo e clique em salvar.</DialogDescription></DialogHeader>
+                <DialogContent className="sm:max-w-[425px]"><DialogHeader><DialogTitle>Editar Cliente</DialogTitle><DialogDescription>Altere os dados.</DialogDescription></DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-name" className="text-right">Nome</Label><Input id="edit-name" value={editingName} onChange={(e) => setEditingName(e.target.value)} className="col-span-3" /></div>
                         <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-email" className="text-right">Email</Label><Input id="edit-email" type="email" value={editingEmail} onChange={(e) => setEditingEmail(e.target.value)} className="col-span-3" /></div>

@@ -1,5 +1,6 @@
 
 import { Client, Product, Purchase } from '../models';
+import { Sequelize, Op } from 'sequelize';
 
 export async function getDashboardStats() {
     try {
