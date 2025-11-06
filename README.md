@@ -7,7 +7,7 @@ A aplicação é dividida em um back-end (API RESTful) e um front-end (React SPA
 O projeto foi totalmente desenvolvido em TypeScript e implantado na nuvem usando uma arquitetura de serviços distribuídos (Vercel, Render e Aiven).
 
 
-Status do Projeto: 🏁 Concluído
+Status do Projeto: Concluído
 
 
 ✨ Funcionalidades Principais
@@ -119,9 +119,9 @@ Clone este repositório:
 
 Bash
 
-git clone https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+git clone https://github.com/GustavoCrisosth/Crud-NodeJS-TypeScript.git
 
-cd SEU_REPOSITORIO
+cd Crud-NodeJS-TypeScript
 
 Navegue até a pasta do back-end:
 
